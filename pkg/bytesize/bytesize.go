@@ -2,14 +2,16 @@ package bytesize
 
 import (
 	"fmt"
-	"strconv"
+	"regexp"
 	"strings"
-	"unicode"
 )
 
-var (
-	Format string = "%d"
-	Binary bool   = true
+type byteFormat int
+
+const (
+	Both byteFormat = iota
+	Decimal
+	Binary
 )
 
 type ByteSize uint64
@@ -22,9 +24,7 @@ const (
 	TiB
 	PiB
 	EiB
-)
 
-const (
 	KB ByteSize = 1000
 	MB ByteSize = KB * 1000
 	GB ByteSize = MB * 1000
@@ -66,114 +66,65 @@ var mapByteSizeToUnit = map[ByteSize]string{
 	EiB: "EiB",
 }
 
-func (b ByteSize) Format(format string, unit string, binary bool) string {
-	return b.format(format, unit, binary)
+func (b ByteSize) Format(format string, unit string) string {
+	return b.format(format, unit)
 }
 
-func (b ByteSize) format(format string, unit string, binary bool) string {
+func (b ByteSize) format(format string, unit string) string {
 	var unitSize ByteSize
 	if unit != "" {
 		var ok bool
 		unitSize, ok = mapUnitToByteSize[unit]
 		if !ok {
-			return fmt.Sprintf("invalid unit: %s", unit)
-		}
-		if !strings.Contains(format, "f") {
-			return fmt.Sprintf("invalid format for specific unit: %s", format)
-		}
-	} else {
-		if !strings.Contains(format, "f") {
-			switch {
-			case b >= EiB && b%EiB == 0:
-				return fmt.Sprintf("%dEiB", b/EiB)
-			case b >= EB && b%EB == 0:
-				return fmt.Sprintf("%dEB", b/EB)
-			case b >= PiB && b%PiB == 0:
-				return fmt.Sprintf("%dPiB", b/PiB)
-			case b >= PB && b%PB == 0:
-				return fmt.Sprintf("%dPB", b/PB)
-			case b >= TiB && b%TiB == 0:
-				return fmt.Sprintf("%dTiB", b/TiB)
-			case b >= TB && b%TB == 0:
-				return fmt.Sprintf("%dTB", b/TB)
-			case b >= GiB && b%GiB == 0:
-				return fmt.Sprintf("%dGiB", b/GiB)
-			case b >= GB && b%GB == 0:
-				return fmt.Sprintf("%dGB", b/GB)
-			case b >= MiB && b%MiB == 0:
-				return fmt.Sprintf("%dMiB", b/MiB)
-			case b >= MB && b%MB == 0:
-				return fmt.Sprintf("%dMB", b/MB)
-			case b >= KiB && b%KiB == 0:
-				return fmt.Sprintf("%dKiB", b/KiB)
-			case b >= KB && b%KB == 0:
-				return fmt.Sprintf("%dKB", b/KB)
-			default:
-				return fmt.Sprintf("%dB", b)
-			}
+			panic(fmt.Sprintf("invalid unit: %s", unit))
 		}
 
-		if binary {
-			switch {
-			case b >= EiB:
-				unitSize = EiB
-			case b >= PiB:
-				unitSize = PiB
-			case b >= TiB:
-				unitSize = TiB
-			case b >= GiB:
-				unitSize = GiB
-			case b >= MiB:
-				unitSize = MiB
-			case b >= KiB:
-				unitSize = KiB
-			default:
-				unitSize = B
-			}
-		} else {
-			switch {
-			case b >= EB:
-				unitSize = EB
-			case b >= PB:
-				unitSize = PB
-			case b >= TB:
-				unitSize = TB
-			case b >= GB:
-				unitSize = GB
-			case b >= MB:
-				unitSize = MB
-			case b >= KB:
-				unitSize = KB
-			default:
-				unitSize = B
-			}
+		paramMatcher := regexp.MustCompile("%.*f")
+		if !paramMatcher.MatchString(format) {
+			panic(fmt.Sprintf("invalid format for specific unit: %s", format))
 		}
+		return fmt.Sprintf(format, float64(b)/float64(unitSize)) + mapByteSizeToUnit[unitSize]
+
 	}
-
-	return fmt.Sprintf(format, float64(b)/float64(unitSize)) + mapByteSizeToUnit[unitSize]
+	switch {
+	case b >= EiB && b%EiB == 0:
+		return fmt.Sprintf("%dEiB", b/EiB)
+	case b >= EB && b%EB == 0:
+		return fmt.Sprintf("%dEB", b/EB)
+	case b >= PiB && b%PiB == 0:
+		return fmt.Sprintf("%dPiB", b/PiB)
+	case b >= PB && b%PB == 0:
+		return fmt.Sprintf("%dPB", b/PB)
+	case b >= TiB && b%TiB == 0:
+		return fmt.Sprintf("%dTiB", b/TiB)
+	case b >= TB && b%TB == 0:
+		return fmt.Sprintf("%dTB", b/TB)
+	case b >= GiB && b%GiB == 0:
+		return fmt.Sprintf("%dGiB", b/GiB)
+	case b >= GB && b%GB == 0:
+		return fmt.Sprintf("%dGB", b/GB)
+	case b >= MiB && b%MiB == 0:
+		return fmt.Sprintf("%dMiB", b/MiB)
+	case b >= MB && b%MB == 0:
+		return fmt.Sprintf("%dMB", b/MB)
+	case b >= KiB && b%KiB == 0:
+		return fmt.Sprintf("%dKiB", b/KiB)
+	case b >= KB && b%KB == 0:
+		return fmt.Sprintf("%dKB", b/KB)
+	default:
+		return fmt.Sprintf("%dB", b)
+	}
 }
 
 func (b ByteSize) String() string {
-	return b.format(Format, "", Binary)
+	return b.format("", "")
 }
 
 func Parse(s string) (ByteSize, error) {
-	var parts []string
+	var num uint64
+	var unit string
 
-	for i, r := range s {
-		if !unicode.IsDigit(r) && r != '.' {
-			parts = []string{s[:i], s[i:]}
-			break
-		}
-	}
-
-	if len(parts) != 2 {
-		return 0, fmt.Errorf("invalid byte size: %s", s)
-	}
-
-	unit := parts[1]
-	num, err := strconv.ParseFloat(parts[0], 64)
-	if err != nil {
+	if _, err := fmt.Sscanf(s, "%d%s", &num, &unit); err != nil {
 		return 0, err
 	}
 
@@ -181,7 +132,7 @@ func Parse(s string) (ByteSize, error) {
 	if !ok {
 		return 0, fmt.Errorf("invalid unit: %s", unit)
 	}
-	return ByteSize(num * float64(mult)), nil
+	return ByteSize(num) * mult, nil
 }
 
 // Satisfy the flag package  Value interface.
