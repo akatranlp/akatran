@@ -27,7 +27,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/akatranlp/akatran/lib/bytesize"
+	"github.com/akatranlp/akatran/pkg/bytesize"
 	"github.com/joho/godotenv"
 	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
@@ -65,6 +65,7 @@ to quickly create a Cobra application.`,
 		}
 
 		fmt.Println(cfg.StorageSize, uint64(cfg.StorageSize))
+		fmt.Println(cfg.StorageSize.Format("%f", "PB"), uint64(cfg.StorageSize))
 	},
 }
 
@@ -80,14 +81,11 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	bytesize.Format = "%.2f"
-	bytesize.Binary = true
-
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/akatran/config.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", fmt.Sprintf("config file (default is $XDG_CONFIG_HOME/%s/config.yaml)", rootCmd.Name()))
 
 	rootCmd.PersistentFlags().VarP(&storageSize, "size", "s", "storage size")
 	viper.BindPFlag("size", rootCmd.PersistentFlags().Lookup("size"))
@@ -107,8 +105,7 @@ func initConfig() {
 		configDir, err := os.UserConfigDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".akatran" (without extension).
-		viper.AddConfigPath(path.Join(configDir, "akatran"))
+		viper.AddConfigPath(path.Join(configDir, rootCmd.Name()))
 		viper.SetConfigType("yaml")
 		viper.SetConfigName("config")
 	}
