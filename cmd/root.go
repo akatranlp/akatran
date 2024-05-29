@@ -23,14 +23,19 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path"
 
+	"github.com/akatranlp/akatran/lib/bytesize"
+	"github.com/joho/godotenv"
+	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 var cfgFile string
+var storageSize bytesize.ByteSize = 100 * bytesize.GB
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -44,7 +49,23 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) {},
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("%s\n", viper.Get("size"))
+
+		decoderOptions := viper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+			mapstructure.StringToSliceHookFunc(","),
+			mapstructure.TextUnmarshallerHookFunc(),
+		))
+
+		var cfg Config
+		err := viper.UnmarshalExact(&cfg, decoderOptions)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Println(cfg.StorageSize, uint64(cfg.StorageSize))
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -59,11 +80,17 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	bytesize.Format = "%.2f"
+	bytesize.Binary = true
+
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/akatran/config.yaml)")
+
+	rootCmd.PersistentFlags().VarP(&storageSize, "size", "s", "storage size")
+	viper.BindPFlag("size", rootCmd.PersistentFlags().Lookup("size"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -86,10 +113,16 @@ func initConfig() {
 		viper.SetConfigName("config")
 	}
 
+	godotenv.Load()
+
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
+}
+
+type Config struct {
+	StorageSize bytesize.ByteSize `mapstructure:"size"`
 }
