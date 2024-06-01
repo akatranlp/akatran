@@ -1,0 +1,11 @@
+.gitignore
+.git
+
+.env
+.env.example
+
+config.yaml
+config-example.yaml
+
+LICENSE
+README.md

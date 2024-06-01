@@ -26,6 +26,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/akatranlp/akatran/pkg/bytesize"
 	"github.com/joho/godotenv"
@@ -36,6 +37,7 @@ import (
 
 var cfgFile string
 var storageSize bytesize.ByteSize = 100 * bytesize.GB
+var ram bytesize.ByteSize = 2 * bytesize.GiB
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -65,7 +67,17 @@ to quickly create a Cobra application.`,
 		}
 
 		fmt.Println(cfg.StorageSize, uint64(cfg.StorageSize))
-		fmt.Println(cfg.StorageSize.Format("%f", "PB"), uint64(cfg.StorageSize))
+		fmt.Println(cfg.StorageSize.Format("%.03f", "GB"))
+
+		fmt.Println(cfg.StorageSize.FromMB())
+
+		fmt.Println(cfg.Ram, uint64(cfg.Ram))
+		fmt.Println(cfg.Ram.Format("%.03f", "GB"))
+
+		fmt.Println(cfg.Ram.FromMiB())
+
+		viper.GetUint64("size")
+
 	},
 }
 
@@ -76,6 +88,10 @@ func Execute() {
 	if err != nil {
 		os.Exit(1)
 	}
+}
+
+func SetAppVersion(version string) {
+	rootCmd.Version = version
 }
 
 func init() {
@@ -89,6 +105,8 @@ func init() {
 
 	rootCmd.PersistentFlags().VarP(&storageSize, "size", "s", "storage size")
 	viper.BindPFlag("size", rootCmd.PersistentFlags().Lookup("size"))
+	rootCmd.PersistentFlags().VarP(&ram, "ram", "r", "ram size")
+	viper.BindPFlag("ram", rootCmd.PersistentFlags().Lookup("ram"))
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -112,6 +130,10 @@ func initConfig() {
 
 	godotenv.Load()
 
+	viper.SetDefault("size", "200GB")
+
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
@@ -122,4 +144,5 @@ func initConfig() {
 
 type Config struct {
 	StorageSize bytesize.ByteSize `mapstructure:"size"`
+	Ram         bytesize.ByteSize `mapstructure:"ram"`
 }

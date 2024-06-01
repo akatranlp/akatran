@@ -6,14 +6,6 @@ import (
 	"strings"
 )
 
-type byteFormat int
-
-const (
-	Both byteFormat = iota
-	Decimal
-	Binary
-)
-
 type ByteSize uint64
 
 const (

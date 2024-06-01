@@ -23,6 +23,9 @@ package main
 
 import "github.com/akatranlp/akatran/cmd"
 
+var version = "dev"
+
 func main() {
+	cmd.SetAppVersion(version)
 	cmd.Execute()
 }

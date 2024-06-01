@@ -20,6 +20,9 @@
 !.env.example
 !config-example.yaml
 
+!Dockerfile
+!.dockerignore
+
 # !Makefile
 
 # ...even if they are in subdirectories
