@@ -40,6 +40,14 @@ var createCmd = &cobra.Command{
 	Use:   "create [flags] dns_record",
 	Short: "Create a new DNS record",
 	Args:  cobra.ExactArgs(1),
+	Long: `With the subcommands you can create a new record to your domain.
+if you don't provide the content flag, your public IP-Adress from the record type will be used. 
+For example:
+
+  akatran dns [--token <cloudflare-token>] [--provider <cloudflare>] create www.example.com [--content content] [--type A|AAAA|CNAME]
+  akatran dns create www.example.com
+  akatran dns create www.example.com --type CNAME --content example.com
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SetErrPrefix("Error: [DNS - CREATE] - ")
 
@@ -106,14 +114,4 @@ func init() {
 
 	createCmd.Flags().StringVarP(&recordType, "type", "t", "A", "The type of the DNS record")
 	createCmd.Flags().StringVarP(&recordContent, "content", "c", "", "The content of the DNS record")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// createCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

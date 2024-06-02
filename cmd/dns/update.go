@@ -23,10 +23,12 @@ package dns
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	dnsRepo "github.com/akatranlp/akatran/internal/dns"
 	"github.com/akatranlp/akatran/internal/spinner"
+	"github.com/akatranlp/akatran/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -35,12 +37,13 @@ var updateCmd = &cobra.Command{
 	Use:   "update [flags] dns_record",
 	Short: "Update a DNS record",
 	Args:  cobra.ExactArgs(1),
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `With the subcommands you can update the given record.
+if you don't provide the content flag, your public IP-Adress from the record type will be used. 
+For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+  akatran dns [--token <cloudflare-token>] [--provider <cloudflare>] update www.example.com [--content content]
+  akatran dns update www.example.com 
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsRecord := args[0]
 
@@ -59,11 +62,35 @@ to quickly create a Cobra application.`,
 		spinner.Start()
 		defer spinner.Stop()
 
+		switch recordType {
+		case "A":
+			ip := utils.GetIPv4Address(recordContent)
+			if ip == nil {
+				return fmt.Errorf("invalid IPv4 address")
+			}
+			recordContent = ip.String()
+		case "AAAA":
+			ip := utils.GetIPv6Address(recordContent)
+			if ip == nil {
+				return fmt.Errorf("invalid IPv6 address")
+			}
+			recordContent = ip.String()
+		case "CNAME":
+			if recordContent == "" {
+				return fmt.Errorf("content is required for CNAME records")
+			}
+			domain, err := url.Parse(recordContent)
+			if err != nil {
+				return err
+			}
+			recordContent = domain.Hostname()
+		}
+
 		if err := repo.UpdateRecord(cmd.Context(), dnsRepo.DnsRecord{
 			Name:    dnsRecord,
 			Content: recordContent,
 		}); err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
+			return err
 		}
 
 		spinner.Stop()
@@ -76,5 +103,6 @@ to quickly create a Cobra application.`,
 func init() {
 	DnsCmd.AddCommand(updateCmd)
 
+	updateCmd.Flags().StringVarP(&recordType, "type", "t", "A", "The type of the DNS record")
 	updateCmd.Flags().StringVarP(&recordContent, "content", "c", "", "The content of the DNS record")
 }

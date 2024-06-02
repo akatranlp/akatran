@@ -20,8 +20,8 @@ type DnsRecord struct {
 type DnsRecordList []DnsRecord
 
 func (d DnsRecordList) AsTableString() string {
-	paddingName := 0
-	paddingContent := 0
+	paddingName := 4
+	paddingContent := 7
 	for _, record := range d {
 		paddingName = max(len(record.Name), paddingName)
 		paddingContent = max(len(record.Content), paddingContent)
@@ -58,10 +58,10 @@ func (d DnsRecordList) AsJsonString() string {
 }
 
 type DnsRepository interface {
-	ListRecords(ctx context.Context) (DnsRecordList, error)
+	ListRecords(ctx context.Context, types ...string) (DnsRecordList, error)
 	CreateRecord(ctx context.Context, record DnsRecord) error
 	UpdateRecord(ctx context.Context, record DnsRecord) error
-	DeleteRecord(ctx context.Context, name string) error
+	DeleteRecord(ctx context.Context, record DnsRecord) (DnsRecordList, error)
 }
 
 func sortDnsRecords(records []DnsRecord) []DnsRecord {

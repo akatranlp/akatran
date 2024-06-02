@@ -30,17 +30,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var deleteRecordType string
+
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete [flags] dns_record",
 	Short: "Delete a DNS record",
 	Args:  cobra.ExactArgs(1),
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `With the subcommands you can delete the given record of your domain.
+For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+  akatran dns [--token <cloudflare-token>] [--provider <cloudflare>] delete www.example.com --type A|AAAA|CNAME
+  akatran dns delete www.example.com --type A
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsRecord := args[0]
 
@@ -59,12 +61,26 @@ to quickly create a Cobra application.`,
 		spinner.Start()
 		defer spinner.Stop()
 
-		if err := repo.DeleteRecord(cmd.Context(), dnsRecord); err != nil {
+		switch deleteRecordType {
+		case "A":
+		case "AAAA":
+		case "CNAME":
+		default:
+			return fmt.Errorf("invalid record type")
+		}
+
+		dnsRecords, err := repo.DeleteRecord(cmd.Context(), dnsRepo.DnsRecord{
+			Name: dnsRecord,
+			Type: deleteRecordType,
+		})
+		if err != nil {
 			return err
 		}
 
 		spinner.Stop()
-		cmd.Printf("DNS record %s deleted!\n", dnsRecord)
+
+		cmd.Println("The following DNS records were deleted!")
+		cmd.Println(dnsRecords.AsTableString())
 		return nil
 	},
 }
@@ -72,13 +88,6 @@ to quickly create a Cobra application.`,
 func init() {
 	DnsCmd.AddCommand(deleteCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	deleteCmd.Flags().StringVarP(&deleteRecordType, "type", "t", "", "Record type")
+	deleteCmd.MarkFlagRequired("type")
 }

@@ -31,13 +31,15 @@ var provider string
 // DnsCmd represents the Dns command
 var DnsCmd = &cobra.Command{
 	Use:   "dns",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "This command allows you to interact with DNS records",
+	Long: `With the subcommands you can list, create, update or delete
+given DNS-records for your domains. For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	akatran dns [--token <cloudflare-token>] [--provider <cloudflare>] list example.com 
+	akatran dns create www.example.com --type A --content 127.0.0.1
+	akatran dns update www.example.com --content 192.168.0.1
+	akatran dns delete www.example.com
+`,
 }
 
 func init() {
