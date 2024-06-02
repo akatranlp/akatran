@@ -21,11 +21,21 @@ THE SOFTWARE.
 */
 package main
 
-import "github.com/akatranlp/akatran/cmd"
+import (
+	"context"
+	"os/signal"
+	"syscall"
+
+	"github.com/akatranlp/akatran/cmd"
+)
 
 var version = "dev"
 
 func main() {
 	cmd.SetAppVersion(version)
-	cmd.Execute()
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	cmd.ExecuteContext(ctx)
 }
