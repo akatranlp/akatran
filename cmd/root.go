@@ -28,11 +28,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/akatranlp/akatran/internal/viper"
 	"github.com/akatranlp/akatran/pkg/bytesize"
 	"github.com/joho/godotenv"
-	"github.com/mitchellh/mapstructure"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var cfgFile string
@@ -54,14 +53,8 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("%s\n", viper.Get("size"))
 
-		decoderOptions := viper.DecodeHook(mapstructure.ComposeDecodeHookFunc(
-			mapstructure.StringToTimeDurationHookFunc(),
-			mapstructure.StringToSliceHookFunc(","),
-			mapstructure.TextUnmarshallerHookFunc(),
-		))
-
 		var cfg Config
-		err := viper.UnmarshalExact(&cfg, decoderOptions)
+		err := viper.UnmarshalExact(&cfg)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -77,7 +70,6 @@ to quickly create a Cobra application.`,
 		fmt.Println(cfg.Ram.FromMiB())
 
 		viper.GetUint64("size")
-
 	},
 }
 
@@ -128,11 +120,12 @@ func initConfig() {
 		viper.SetConfigName("config")
 	}
 
-	godotenv.Load()
+	if err := godotenv.Load(); err == nil {
+		fmt.Fprintln(os.Stderr, "Using .env file")
+	}
 
-	viper.SetDefault("size", "200GB")
-
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.SetEnvPrefix("AKATRAN")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("::", "_"))
 
 	viper.AutomaticEnv() // read in environment variables that match
 
