@@ -42,15 +42,14 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SetErrPrefix("Error: [DNS - LIST] - ")
 
 		domain := args[0]
 
 		repo, err := dnsRepo.GetRepoFromViperOrFlag(domain, provider, token)
 		if err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
-			return
+			return err
 		}
 
 		spinner.Start()
@@ -60,8 +59,7 @@ to quickly create a Cobra application.`,
 
 		dnsRecords, err := repo.ListRecords(cmd.Context())
 		if err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
-			return
+			return err
 		}
 
 		spinner.Stop()
@@ -71,6 +69,7 @@ to quickly create a Cobra application.`,
 		} else {
 			fmt.Println(dnsRecords.AsTableString())
 		}
+		return nil
 	},
 }
 

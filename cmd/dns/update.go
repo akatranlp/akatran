@@ -22,6 +22,7 @@ THE SOFTWARE.
 package dns
 
 import (
+	"fmt"
 	"strings"
 
 	dnsRepo "github.com/akatranlp/akatran/internal/dns"
@@ -40,21 +41,19 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		dnsRecord := args[0]
 
 		parts := strings.Split(dnsRecord, ".")
 		if len(parts) < 2 {
-			cmd.PrintErrln("invalid dns record")
-			return
+			return fmt.Errorf("invalid dns record")
 		}
 
 		domain := strings.Join(parts[len(parts)-2:], ".")
 
 		repo, err := dnsRepo.GetRepoFromViperOrFlag(domain, provider, token)
 		if err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
-			return
+			return err
 		}
 
 		spinner.Start()
@@ -69,6 +68,8 @@ to quickly create a Cobra application.`,
 
 		spinner.Stop()
 		cmd.Printf("DNS record %s updated!\n", dnsRecord)
+
+		return nil
 	},
 }
 
