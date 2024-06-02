@@ -26,9 +26,11 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	dnsRepo "github.com/akatranlp/akatran/internal/dns"
 	"github.com/akatranlp/akatran/internal/viper"
+	"github.com/briandowns/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -76,11 +78,16 @@ to quickly create a Cobra application.`,
 			return
 		}
 
+		s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+		s.Start()
+
 		dnsRecords, err := repo.ListRecords(cmd.Context())
 		if err != nil {
 			cmd.PrintErrln(cmd.ErrPrefix(), err)
 			return
 		}
+
+		s.Stop()
 
 		paddingName := 0
 		paddingContent := 0
