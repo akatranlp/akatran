@@ -1,1 +1,4 @@
-size: 100GiB
+dns:
+  example.com:
+    provider: cloudflare
+    token: cloudflare-api-token
