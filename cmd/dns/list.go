@@ -23,9 +23,7 @@ package dns
 
 import (
 	"fmt"
-	"math"
 	"net/http"
-	"strings"
 
 	dnsRepo "github.com/akatranlp/akatran/internal/dns"
 	"github.com/akatranlp/akatran/internal/spinner"
@@ -35,6 +33,7 @@ import (
 
 var token string
 var provider string
+var jsonOutput bool
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
@@ -78,6 +77,9 @@ to quickly create a Cobra application.`,
 		}
 
 		spinner.Start()
+		defer spinner.Stop()
+
+		cmd.Println("Listing DNS records for", domain)
 
 		dnsRecords, err := repo.ListRecords(cmd.Context())
 		if err != nil {
@@ -87,30 +89,11 @@ to quickly create a Cobra application.`,
 
 		spinner.Stop()
 
-		paddingName := 0
-		paddingContent := 0
-		for _, record := range dnsRecords {
-			paddingName = max(len(record.Name), paddingName)
-			paddingContent = max(len(record.Content), paddingContent)
+		if jsonOutput {
+			fmt.Println(dnsRecords.AsJsonString())
+		} else {
+			fmt.Println(dnsRecords.AsTableString())
 		}
-
-		spacer := strings.Repeat("-", 10+5+paddingName+paddingContent)
-		cmd.Println(spacer)
-
-		typeString := "TYPE "
-
-		newPaddingName := paddingName - 4
-		nameString := fmt.Sprintf("%sNAME%s", strings.Repeat(" ", int(math.Ceil(float64(newPaddingName)/2))), strings.Repeat(" ", int(math.Floor(float64(newPaddingName)/2))))
-
-		newPaddingContent := paddingContent - 7
-		contentString := fmt.Sprintf("%sCONTENT%s", strings.Repeat(" ", int(math.Ceil(float64(newPaddingContent)/2))), strings.Repeat(" ", int(math.Floor(float64(newPaddingContent)/2))))
-
-		cmd.Printf("| %s | %s | %s |\n", typeString, nameString, contentString)
-		cmd.Println(spacer)
-		for _, record := range dnsRecords {
-			cmd.Printf("| %-5s | %*s | %*s |\n", record.Type, paddingName, record.Name, paddingContent, record.Content)
-		}
-		cmd.Println(spacer)
 	},
 }
 
@@ -119,4 +102,5 @@ func init() {
 
 	listCmd.Flags().StringVarP(&provider, "provider", "p", "", "DNS provider")
 	listCmd.Flags().StringVarP(&token, "token", "t", "", "API token")
+	listCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output as JSON")
 }
