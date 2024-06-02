@@ -31,10 +31,9 @@ import (
 
 // updateCmd represents the update command
 var updateCmd = &cobra.Command{
-	Use:        "update [flags] dns_record",
-	Short:      "Update a DNS record",
-	Args:       cobra.ExactArgs(1),
-	ArgAliases: []string{"dns_record"},
+	Use:   "update [flags] dns_record",
+	Short: "Update a DNS record",
+	Args:  cobra.ExactArgs(1),
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
