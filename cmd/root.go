@@ -28,6 +28,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/akatranlp/akatran/cmd/dns"
 	"github.com/akatranlp/akatran/internal/viper"
 	"github.com/akatranlp/akatran/pkg/bytesize"
 	"github.com/joho/godotenv"
@@ -86,7 +87,13 @@ func SetAppVersion(version string) {
 	rootCmd.Version = version
 }
 
+func addSubCommands() {
+	rootCmd.AddCommand(dns.DnsCmd)
+}
+
 func init() {
+	addSubCommands()
+
 	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
