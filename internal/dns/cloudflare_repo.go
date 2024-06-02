@@ -256,14 +256,14 @@ func (c *CloudflareRepo) UpdateRecord(ctx context.Context, record DnsRecord) err
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(&cloudflareDnsRecord{
 		Name:    record.Name,
-		Type:    record.Type,
+		Type:    records.Result[0].Type,
 		Content: record.Content,
 		TTL:     1,
 	}); err != nil {
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", zoneID, records.Result[0].ID), &buf)
+	req, err := http.NewRequestWithContext(ctx, "PATCH", fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", zoneID, records.Result[0].ID), &buf)
 	if err != nil {
 		return err
 	}
