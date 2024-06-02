@@ -107,10 +107,6 @@ func init() {
 	viper.BindPFlag("size", rootCmd.PersistentFlags().Lookup("size"))
 	rootCmd.PersistentFlags().VarP(&ram, "ram", "r", "ram size")
 	viper.BindPFlag("ram", rootCmd.PersistentFlags().Lookup("ram"))
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 // initConfig reads in config file and ENV variables if set.

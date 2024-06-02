@@ -23,16 +23,12 @@ package dns
 
 import (
 	"fmt"
-	"net/http"
 
 	dnsRepo "github.com/akatranlp/akatran/internal/dns"
 	"github.com/akatranlp/akatran/internal/spinner"
-	"github.com/akatranlp/akatran/internal/viper"
 	"github.com/spf13/cobra"
 )
 
-var token string
-var provider string
 var jsonOutput bool
 
 // listCmd represents the list command
@@ -51,28 +47,10 @@ to quickly create a Cobra application.`,
 		cmd.SetErrPrefix("Error: [DNS - LIST] - ")
 
 		domain := args[0]
-		keyStart := fmt.Sprintf("dns::%s", domain)
 
-		if sub := viper.GetString(keyStart + "::provider"); sub != "" {
-			provider = sub
-		} else {
-			cmd.PrintErrln("domain not found in config falling back to flag params")
-		}
-
-		var repo dnsRepo.DnsRepository
-		switch provider {
-		case dnsRepo.CloudflareProvider:
-			if sub := viper.GetString(keyStart + "::token"); sub != "" {
-				token = sub
-			}
-
-			if token == "" {
-				cmd.PrintErrln(cmd.ErrPrefix(), "Token not provided")
-				return
-			}
-			repo = dnsRepo.NewCloudflareRepo(domain, token, http.DefaultClient)
-		default:
-			cmd.PrintErrln(cmd.ErrPrefix(), "Provider not supported", provider)
+		repo, err := dnsRepo.GetRepoFromViperOrFlag(domain, provider, token)
+		if err != nil {
+			cmd.PrintErrln(cmd.ErrPrefix(), err)
 			return
 		}
 
@@ -100,7 +78,5 @@ to quickly create a Cobra application.`,
 func init() {
 	DnsCmd.AddCommand(listCmd)
 
-	listCmd.Flags().StringVarP(&provider, "provider", "p", "", "DNS provider")
-	listCmd.Flags().StringVarP(&token, "token", "t", "", "API token")
 	listCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output as JSON")
 }
