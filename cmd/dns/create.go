@@ -36,10 +36,9 @@ var recordContent string
 
 // createCmd represents the create command
 var createCmd = &cobra.Command{
-	Use:        "create [flags] dns_record",
-	Short:      "Create a new DNS record",
-	Args:       cobra.ExactArgs(1),
-	ArgAliases: []string{"dns_record"},
+	Use:   "create [flags] dns_record",
+	Short: "Create a new DNS record",
+	Args:  cobra.ExactArgs(1),
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 

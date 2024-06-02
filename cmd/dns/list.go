@@ -33,10 +33,9 @@ var jsonOutput bool
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
-	Use:        "list [flags] domain",
-	Short:      "List all DNS records of selected domain",
-	Args:       cobra.ExactArgs(1),
-	ArgAliases: []string{"domain"},
+	Use:   "list [flags] domain",
+	Short: "List all DNS records of selected domain",
+	Args:  cobra.ExactArgs(1),
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
