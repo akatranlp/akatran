@@ -6,7 +6,7 @@ import (
 	"github.com/briandowns/spinner"
 )
 
-var s = spinner.New(spinner.CharSets[11], 100*time.Millisecond)
+var s = spinner.New(spinner.CharSets[9], 100*time.Millisecond)
 
 func Start() {
 	s.Start()
