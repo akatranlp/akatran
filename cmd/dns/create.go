@@ -22,6 +22,7 @@ THE SOFTWARE.
 package dns
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -39,61 +40,48 @@ var createCmd = &cobra.Command{
 	Use:   "create [flags] dns_record",
 	Short: "Create a new DNS record",
 	Args:  cobra.ExactArgs(1),
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SetErrPrefix("Error: [DNS - CREATE] - ")
 
 		dnsRecord := args[0]
 
 		parts := strings.Split(dnsRecord, ".")
 		if len(parts) < 2 {
-			cmd.PrintErrln("invalid dns record")
-			return
+			return fmt.Errorf("invalid dns record")
 		}
 
 		domain := strings.Join(parts[len(parts)-2:], ".")
 
 		repo, err := dnsRepo.GetRepoFromViperOrFlag(domain, provider, token)
 		if err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
-			return
+			return err
 		}
 
 		switch recordType {
 		case "A":
 			ip := utils.GetIPv4Address(recordContent)
 			if ip == nil {
-				cmd.PrintErrln("invalid IPv4 address")
-				return
+				return fmt.Errorf("invalid IPv4 address")
 			}
 			recordContent = ip.String()
 
 		case "AAAA":
 			ip := utils.GetIPv6Address(recordContent)
 			if ip == nil {
-				cmd.PrintErrln("invalid IPv6 address")
-				return
+				return fmt.Errorf("invalid IPv6 address")
 			}
 			recordContent = ip.String()
 		case "CNAME":
 			if recordContent == "" {
-				cmd.PrintErrln("content is required for CNAME records")
-				return
+				return fmt.Errorf("content is required for CNAME records")
 			}
 			domain, err := url.Parse(recordContent)
 			if err != nil {
-				cmd.PrintErrln("invalid CNAME record")
-				return
+				return err
 			}
 			recordContent = domain.Hostname()
 		default:
-			cmd.PrintErrln("invalid record type")
-			return
+			return fmt.Errorf("invalid record type")
 		}
 
 		spinner.Start()
@@ -104,11 +92,12 @@ to quickly create a Cobra application.`,
 			Type:    recordType,
 			Content: recordContent,
 		}); err != nil {
-			cmd.PrintErrln(cmd.ErrPrefix(), err)
+			return err
 		}
 
 		spinner.Stop()
 		cmd.Printf("DNS record %s created!\n", dnsRecord)
+		return nil
 	},
 }
 
