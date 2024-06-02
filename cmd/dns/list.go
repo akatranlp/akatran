@@ -30,18 +30,34 @@ import (
 )
 
 var jsonOutput bool
+var listRecordType string
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list [flags] domain",
 	Short: "List all DNS records of selected domain",
 	Args:  cobra.ExactArgs(1),
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `With the subcommands you can list all records of a given domain.
+You have to provide the domain as an argument. And can choose between table and json output. 
+For example:
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+  akatran dns [--token <cloudflare-token>] [--provider <cloudflare>] list example.com 
+
+  -------------------------------------------
+  | TYPE  |       NAME      |    CONTENT    |
+  -------------------------------------------
+  | A     |     example.com | 198.51.100.10 |
+  | AAAA  |     example.com |   2001:DB8::1 |
+  | CNAME | www.example.com |   example.com |
+  -------------------------------------------
+	
+
+  akatran dns list example.com --json
+
+  [{"name":"example.com","type":"A","content":"192.51.100.10"},
+  {"name":"example.com","type":"AAAA","content":"2001:DB8::1"},
+  {"name":"www.example.com","type":"CNAME","content":"example.com"}]
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SetErrPrefix("Error: [DNS - LIST] - ")
 
@@ -57,17 +73,32 @@ to quickly create a Cobra application.`,
 
 		cmd.Println("Listing DNS records for", domain)
 
-		dnsRecords, err := repo.ListRecords(cmd.Context())
-		if err != nil {
-			return err
+		var dnsRecords dnsRepo.DnsRecordList
+		switch listRecordType {
+		case "":
+			dnsRecords, err = repo.ListRecords(cmd.Context())
+			if err != nil {
+				return err
+			}
+		case "A":
+			fallthrough
+		case "AAAA":
+			fallthrough
+		case "CNAME":
+			dnsRecords, err = repo.ListRecords(cmd.Context(), listRecordType)
+			if err != nil {
+				return err
+			}
+		default:
+			return fmt.Errorf("invalid record type")
 		}
 
 		spinner.Stop()
 
 		if jsonOutput {
-			fmt.Println(dnsRecords.AsJsonString())
+			cmd.Println(dnsRecords.AsJsonString())
 		} else {
-			fmt.Println(dnsRecords.AsTableString())
+			cmd.Println(dnsRecords.AsTableString())
 		}
 		return nil
 	},
@@ -76,5 +107,6 @@ to quickly create a Cobra application.`,
 func init() {
 	DnsCmd.AddCommand(listCmd)
 
+	listCmd.Flags().StringVarP(&listRecordType, "type", "t", "", "The type of the DNS record")
 	listCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output as JSON")
 }
