@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"bytes"
 	"io"
 	"net"
 	"net/http"
+	"os/exec"
 	"strings"
 )
 
@@ -23,7 +25,15 @@ func fetchIPv4() string {
 }
 
 func fetchIPv6() string {
-	return "::1"
+	cmdStr := `ip -6 addr show scope global | grep -oP '(?<=inet6\s)[\da-f:]+'`
+	cmd := exec.Command("sh", "-c", cmdStr)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	if err := cmd.Run(); err != nil {
+		return ""
+	}
+
+	return buf.String()
 }
 
 func GetIPv4Address(ip string) net.IP {

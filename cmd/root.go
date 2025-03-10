@@ -125,7 +125,7 @@ func initConfig() {
 	}
 
 	if err := godotenv.Load(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using .env file")
+		// fmt.Fprintln(os.Stderr, "Using .env file")
 	}
 
 	viper.SetEnvPrefix("AKATRAN")
@@ -135,7 +135,7 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
 	}
 }
 
