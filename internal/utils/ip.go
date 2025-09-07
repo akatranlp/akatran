@@ -26,14 +26,15 @@ func fetchIPv4() string {
 
 func fetchIPv6() string {
 	cmdStr := `ip -6 addr show scope global | grep -oP '(?<=inet6\s)[\da-f:]+'`
+	// cmdStr := `ip -6 addr show scope link | grep -oP '(?<=inet6\s)[\da-f:]+'`
 	cmd := exec.Command("sh", "-c", cmdStr)
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	if err := cmd.Run(); err != nil {
-		return ""
+		return err.Error()
 	}
 
-	return buf.String()
+	return strings.TrimSpace(buf.String())
 }
 
 func GetIPv4Address(ip string) net.IP {

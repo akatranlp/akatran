@@ -88,6 +88,7 @@ For example:
 
 		if err := repo.UpdateRecord(cmd.Context(), dnsRepo.DnsRecord{
 			Name:    dnsRecord,
+			Type:    recordType,
 			Content: recordContent,
 		}); err != nil {
 			return err
